@@ -1,4 +1,9 @@
 data
+exps
+checkpoints
+logs
+wandb
+*.env
 __pycache__
 *.zip
 *.ipynb

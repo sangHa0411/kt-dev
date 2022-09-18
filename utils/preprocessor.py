@@ -3,6 +3,14 @@
 class Preprocessor :
     def __init__(self, tokenizer) :
         self.tokenizer = tokenizer
+        self.label_dict = {
+            "QT" : "수량",
+            "DT" : "날짜",
+            "PS" : "사람",
+            "LC" : "장소",
+            "TI" : "시간",
+            "OG" : "기관"
+        }
 
     def __call__(self, dataset) :
 
@@ -23,8 +31,8 @@ class Preprocessor :
             inputs.append(input_sen)
 
             if label is not None :
-                label = ['<'+l+'>' for l in label]
-                sep_token = self.tokenizer.sep_token
+                label = [self.label_dict[l] for l in label]
+                sep_token = ", "
                 label_sen = sep_token.join(label)
                 labels.append(label_sen)
             else :
