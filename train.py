@@ -54,7 +54,6 @@ def main():
     load_dotenv(dotenv_path=logging_args.dotenv_path)
     # -- K Fold Training
     for i in range(training_args.fold_size) :
-        i = 4
         print("\n%dth Training" %i)
         train_ids, validation_ids = spliter.get_dataset(i)
 
@@ -134,6 +133,7 @@ def main():
             print("\nEvaluating")
             trainer.evaluate()
 
+        trainer.save_model(target_dir)
         wandb.finish()
         break
 
