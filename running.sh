@@ -5,7 +5,7 @@ python train.py \
 --fold_size 5 \
 --num_train_epochs 5 \
 --per_device_train_batch_size 32 \
---per_device_eval_batch_size 8 \
+--per_device_eval_batch_size 16 \
 --max_input_length 128 \
 --max_output_length 32 \
 --save_strategy steps \
@@ -17,7 +17,7 @@ python train.py \
 --output_dir ./exps \
 --logging_dir ./logs \
 --learning_rate 5e-5 \
---weight_decay 1e-3 \
+--weight_decay 1e-4 \
 --generation_num_beams 1 \
 --predict_with_generate True \
 --generation_max_length 32 \

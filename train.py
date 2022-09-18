@@ -3,9 +3,9 @@ import json
 import torch
 import random
 import numpy as np
-import importlib
-import copy
+import wandb
 import multiprocessing
+from dotenv import load_dotenv
 from datasets import DatasetDict
 from models.metrics import Metrics
 from models.model import T5ForConditionalGeneration
@@ -54,6 +54,7 @@ def main():
     load_dotenv(dotenv_path=logging_args.dotenv_path)
     # -- K Fold Training
     for i in range(training_args.fold_size) :
+        i = 4
         print("\n%dth Training" %i)
         train_ids, validation_ids = spliter.get_dataset(i)
 
@@ -100,6 +101,7 @@ def main():
             os.mkdir(target_dir)
 
         training_args.output_dir = target_dir
+        training_args.dataloader_num_workers = num_proc
         trainer = Seq2SeqTrainer(
             model,
             training_args,
@@ -113,6 +115,7 @@ def main():
         WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
         wandb.login(key=WANDB_AUTH_KEY)
 
+        args = training_args
         wandb_name = f"EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}_FOLD:{i}"
         wandb.init(
             entity="sangha0411",

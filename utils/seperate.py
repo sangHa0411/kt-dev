@@ -14,14 +14,17 @@ class Spliter :
         for i, data in enumerate(dataset) :
             tag_list = re.findall("<[^:]+:[A-Z]{2}>", data)
 
-            for tag in tag_list :
-                _, tag = tag[1:-1].split(':')
-                tag_mapping[tag].append(i)
+            if len(tag_list) == 1 :
+                tag_mapping[0].append(i)
+            elif len(tag_list) < 5 :
+                tag_mapping[1].append(i)
+            else :
+                tag_mapping[2].append(i)
 
-        for tag in tag_mapping :
-            id_list = tag_mapping[tag]
+        for tag_size in tag_mapping :
+            id_list = tag_mapping[tag_size]
             random.shuffle(id_list)
-            tag_mapping[tag] = id_list
+            tag_mapping[tag_size] = id_list
 
         return tag_mapping
 
@@ -31,9 +34,9 @@ class Spliter :
         train_ids = []
         validation_ids = []
 
-        for tag in self.mapping :
+        for tag_size in self.mapping :
 
-            id_list = self.mapping[tag]
+            id_list = self.mapping[tag_size]
             total_size = len(id_list)
             block_size = int(total_size / self.fold_size)
 
@@ -43,7 +46,7 @@ class Spliter :
             train_ids.extend(train_id_list)
             validation_ids.extend(validation_id_list)
 
-        validation_ids = list(set(validation_ids) - set(train_ids))
-        train_ids = list(set(train_ids))
+        random.shuffle(train_ids)
+        random.shuffle(validation_ids)
         return train_ids, validation_ids
         

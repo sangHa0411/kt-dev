@@ -3,7 +3,7 @@ exps
 checkpoints
 logs
 wandb
-*.env
+wandb.env
 __pycache__
 *.zip
 *.ipynb
