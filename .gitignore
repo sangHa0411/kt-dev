@@ -1,0 +1,5 @@
+data
+__pycache__
+*.zip
+*.ipynb
+.DS_Store
