@@ -1,0 +1,24 @@
+python train.py \
+--do_train \
+--do_eval \
+--seed 42 \
+--fold_size 5 \
+--num_train_epochs 5 \
+--per_device_train_batch_size 32 \
+--per_device_eval_batch_size 8 \
+--max_input_length 128 \
+--max_output_length 32 \
+--save_strategy steps \
+--evaluation_strategy steps \
+--save_steps 1000 \
+--eval_steps 1000 \
+--logging_steps 100 \
+--save_total_limit 5 \
+--output_dir ./exps \
+--logging_dir ./logs \
+--learning_rate 5e-5 \
+--weight_decay 1e-3 \
+--generation_num_beams 1 \
+--predict_with_generate True \
+--generation_max_length 32 \
+--warmup_ratio 0.05

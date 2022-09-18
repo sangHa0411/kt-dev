@@ -43,7 +43,7 @@ class Spliter :
             train_ids.extend(train_id_list)
             validation_ids.extend(validation_id_list)
 
-        train_ids = list(set(train_ids) - set(validation_ids))
-        validation_ids = list(set(validation_ids))
+        validation_ids = list(set(validation_ids) - set(train_ids))
+        train_ids = list(set(train_ids))
         return train_ids, validation_ids
         

@@ -8,6 +8,7 @@ import copy
 import multiprocessing
 from datasets import DatasetDict
 from models.metrics import Metrics
+from models.model import T5ForConditionalGeneration
 from utils.loader import Loader
 from utils.parser import parsing
 from utils.seperate import Spliter
@@ -19,7 +20,6 @@ from arguments import ModelArguments, DataTrainingArguments, TrainingArguments, 
 from transformers import (
     T5Config,
     T5TokenizerFast,
-    T5ForConditionalGeneration,
     HfArgumentParser,
     DataCollatorForSeq2Seq,
     Seq2SeqTrainer
@@ -45,16 +45,13 @@ def main():
     print("\nLoad tokenizer")
     model_name = model_args.PLM
     tokenizer = T5TokenizerFast.from_pretrained(model_name, use_fast=True)
-    special_tokens_dict = {'additional_special_tokens': ['<QT>', '<DT>', '<PS>', '<LC>', '<TI>', '<OG>']}
-    sep_token = {'sep_token': '<sep>'}
-    num_added_toks = tokenizer.add_special_tokens(special_tokens_dict)
-    sep_tok = tokenizer.add_special_tokens(sep_token)
-    print(tokenizer)
-
+    
     # -- Spliting datasets
     print("\nSeperate datasets")
     spliter = Spliter(raw_dataset, training_args.fold_size)
 
+    output_dir = training_args.output_dir
+    load_dotenv(dotenv_path=logging_args.dotenv_path)
     # -- K Fold Training
     for i in range(training_args.fold_size) :
         print("\n%dth Training" %i)
@@ -86,13 +83,23 @@ def main():
         print(datasets)
 
         # Loading config & Model
+        print("\nLoading Model")
         config = T5Config.from_pretrained(model_args.PLM)
         model = T5ForConditionalGeneration.from_pretrained(model_args.PLM, config=config)
 
         # DataCollator
         data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
 
+        # Metrics
+        metrics = Metrics(tokenizer)
+        compute_metrics = metrics.compute_metrics
+
         # Trainer
+        target_dir = os.path.join(output_dir, f"fold-{i}")
+        if not os.path.exists(target_dir) :
+            os.mkdir(target_dir)
+
+        training_args.output_dir = target_dir
         trainer = Seq2SeqTrainer(
             model,
             training_args,
@@ -100,16 +107,32 @@ def main():
             eval_dataset=datasets["validation"],
             data_collator=data_collator,
             tokenizer=tokenizer,
-            compute_metrics=Metrics.compute_metrics
+            compute_metrics=compute_metrics
         )
 
+        WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
+        wandb.login(key=WANDB_AUTH_KEY)
+
+        wandb_name = f"EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}_FOLD:{i}"
+        wandb.init(
+            entity="sangha0411",
+            project=logging_args.project_name, 
+            name=wandb_name,
+            group=logging_args.group_name)
+        wandb.config.update(training_args)
+
         # Training
-        trainer.train()
+        if training_args.do_train :
+            print("\nTraining")
+            trainer.train()
 
         # Evaluation
-        trainer.evaluate()
+        if training_args.do_eval :
+            print("\nEvaluating")
+            trainer.evaluate()
 
-
+        wandb.finish()
+        break
 
 
 def seed_everything(seed):
