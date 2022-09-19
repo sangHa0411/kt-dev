@@ -1,5 +1,6 @@
 
 import os
+import random
 
 class Loader :
 
@@ -16,4 +17,5 @@ class Loader :
         dataset = []
         for sen in sentences :
             dataset.append(sen[:-1])
+        random.shuffle(dataset)
         return dataset

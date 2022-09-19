@@ -67,7 +67,7 @@ def main():
         validation_dataset = dataset.select(validation_ids)    
 
         datasets = DatasetDict({"train" : train_dataset, "validation" : validation_dataset})
-        print(dataset)
+        print(datasets)
 
         # Preprocessing datasets
         print("\nPreprocess datasets")
