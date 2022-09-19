@@ -1,9 +1,9 @@
-
+import numpy as np
 from tqdm import tqdm
-from sklearn.metrics import f1_score, accuracy_score
+from sklearn.metrics import f1_score
 from transformers import EvalPrediction
 
-class Metrics :
+class Seq2SeqMetrics :
 
     def __init__(self, tokenizer) :
         self.tokenizer = tokenizer
@@ -17,7 +17,8 @@ class Metrics :
         ref_list = [self.preprocess(ref) for ref in references]
         ref_strings = [self.tokenizer.decode(ref).split(", ") for ref in ref_list]
 
-        eval_f1, eval_acc = 0.0, 0.0
+        wrong_pred = 0.0
+        eval_f1 = 0.0
         eval_size = len(ref_strings)        
         for i in tqdm(range(eval_size)) :
             pred_str = pred_strings[i]
@@ -25,22 +26,18 @@ class Metrics :
 
             if len(pred_str) != len(ref_str) :
                 f1 = 0.0
-                acc = 0.0
-                print(i)
+                wrong_pred += 1.0
             else :
                 f1 = f1_score(ref_str, 
                     pred_str, 
                     labels=list(set(ref_str)),
                     average='macro'
                 )
-                acc = accuracy_score(ref_str, pred_str)
 
             eval_f1 += f1
-            eval_acc += acc
         
         eval_f1 /= eval_size
-        eval_acc /= eval_size
-        return {"f1" : eval_f1, "acc" : eval_acc}
+        return {"f1" : eval_f1, "acc" : eval_acc, "wrong_size" : wrong_size}
 
     def preprocess(self, array) :
         array = array.tolist()
@@ -53,3 +50,34 @@ class Metrics :
 
         valid = array[:index]
         return valid
+
+
+class NERMetrics :
+
+    def __init__(self, ) :
+        pass
+
+    def compute_metrics(self, pred: EvalPrediction):
+        predictions = pred.predictions
+        pred_ids = np.argmax(predictions, axis=-1)
+        references = pred.label_ids
+
+        eval_f1 = 0.0
+        eval_size = len(references)
+        for i in tqdm(range(eval_size)) :
+            ref = references[i].tolist()
+            pred = pred_ids[i].tolist()
+
+            last_index = ref.index(-100) if -100 in ref else len(ref) - 1
+            ref = ref[:last_index]
+            pred = pred[:last_index]
+
+            f1 = f1_score(ref, 
+                pred, 
+                labels=np.unique(ref),
+                average='macro'
+            )
+            eval_f1 += f1
+
+        eval_f1 /= eval_size
+        return {"f1" : eval_f1}

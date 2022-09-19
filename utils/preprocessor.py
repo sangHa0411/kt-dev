@@ -1,6 +1,6 @@
 
 
-class Preprocessor :
+class Seq2SeqPreprocessor :
     def __init__(self, tokenizer) :
         self.tokenizer = tokenizer
         self.label_dict = {

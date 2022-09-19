@@ -1,24 +1,46 @@
-python train.py \
+python train_seq2seq.py \
 --do_train \
 --do_eval \
 --seed 42 \
+--group_name Named_Entity_Distinguish \
 --fold_size 5 \
 --num_train_epochs 3 \
---per_device_train_batch_size 32 \
+--per_device_train_batch_size 16 \
 --per_device_eval_batch_size 16 \
 --max_input_length 128 \
 --max_output_length 32 \
 --save_strategy steps \
 --evaluation_strategy steps \
---save_steps 1000 \
---eval_steps 1000 \
+--save_steps 500 \
+--eval_steps 500 \
 --logging_steps 100 \
 --save_total_limit 5 \
 --output_dir ./exps \
 --logging_dir ./logs \
---learning_rate 1e-4 \
+--learning_rate 5e-5 \
 --weight_decay 1e-4 \
 --generation_num_beams 1 \
 --predict_with_generate True \
 --generation_max_length 32 \
+--warmup_ratio 0.05
+
+python train_ner.py \
+--do_train \
+--do_eval \
+--seed 42 \
+--group_name Named_Entity_Detect \
+--fold_size 5 \
+--num_train_epochs 3 \
+--per_device_train_batch_size 16 \
+--per_device_eval_batch_size 16 \
+--max_input_length 128 \
+--save_strategy steps \
+--evaluation_strategy steps \
+--save_steps 500 \
+--eval_steps 500 \
+--logging_steps 100 \
+--save_total_limit 5 \
+--output_dir ./exps \
+--learning_rate 3e-5 \
+--weight_decay 1e-4 \
 --warmup_ratio 0.05

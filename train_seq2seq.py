@@ -7,13 +7,13 @@ import wandb
 import multiprocessing
 from dotenv import load_dotenv
 from datasets import DatasetDict
-from models.metrics import Metrics
 from models.model import T5ForConditionalGeneration
+from utils.metrics import Seq2SeqMetrics
 from utils.loader import Loader
-from utils.parser import parsing
+from utils.parser import Seq2SeqParser
 from utils.seperate import Spliter
-from utils.preprocessor import Preprocessor
-from utils.encoder import Encoder
+from utils.preprocessor import Seq2SeqPreprocessor
+from utils.encoder import Seq2SeqEncoder
 
 from arguments import ModelArguments, DataTrainingArguments, TrainingArguments, LoggingArguments
 
@@ -59,7 +59,8 @@ def main():
 
         # Parsing datasets
         print("\nParse datasets")
-        dataset = parsing(raw_dataset)
+        parser = Seq2SeqParser()
+        dataset = parser(raw_dataset)
         print(dataset)
 
         train_dataset = dataset.select(train_ids)
@@ -70,14 +71,14 @@ def main():
 
         # Preprocessing datasets
         print("\nPreprocess datasets")
-        preprocessor = Preprocessor(tokenizer)
+        preprocessor = Seq2SeqPreprocessor(tokenizer)
         datasets = datasets.map(preprocessor, batched=True, num_proc=num_proc)
         datasets = datasets.remove_columns(["sentences", "entities"])
         print(datasets)
 
         # Encoding datasets
         print("\nEncode datasets")
-        encoder = Encoder(tokenizer, data_args.max_input_length, data_args.max_output_length)
+        encoder = Seq2SeqEncoder(tokenizer, data_args.max_input_length, data_args.max_output_length)
         datasets = datasets.map(encoder, batched=True, num_proc=num_proc)
         datasets = datasets.remove_columns(["inputs"])
         print(datasets)
@@ -91,11 +92,11 @@ def main():
         data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
 
         # Metrics
-        metrics = Metrics(tokenizer)
+        metrics = Seq2SeqMetrics(tokenizer)
         compute_metrics = metrics.compute_metrics
 
         # Trainer
-        target_dir = os.path.join(output_dir, f"fold-{i}")
+        target_dir = os.path.join(output_dir, "seq2seq", f"fold-{i}")
         if not os.path.exists(target_dir) :
             os.mkdir(target_dir)
 
