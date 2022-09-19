@@ -17,7 +17,7 @@ class Seq2SeqMetrics :
         ref_list = [self.preprocess(ref) for ref in references]
         ref_strings = [self.tokenizer.decode(ref).split(", ") for ref in ref_list]
 
-        wrong_pred = 0.0
+        wrong_size = 0.0
         eval_f1 = 0.0
         eval_size = len(ref_strings)        
         for i in tqdm(range(eval_size)) :
@@ -26,7 +26,7 @@ class Seq2SeqMetrics :
 
             if len(pred_str) != len(ref_str) :
                 f1 = 0.0
-                wrong_pred += 1.0
+                wrong_size += 1.0
             else :
                 f1 = f1_score(ref_str, 
                     pred_str, 
@@ -37,7 +37,7 @@ class Seq2SeqMetrics :
             eval_f1 += f1
         
         eval_f1 /= eval_size
-        return {"f1" : eval_f1, "acc" : eval_acc, "wrong_size" : wrong_size}
+        return {"f1" : eval_f1, "wrong_size" : wrong_size}
 
     def preprocess(self, array) :
         array = array.tolist()

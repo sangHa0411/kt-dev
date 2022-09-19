@@ -17,7 +17,7 @@ python train_seq2seq.py \
 --save_total_limit 5 \
 --output_dir ./exps \
 --logging_dir ./logs \
---learning_rate 5e-5 \
+--learning_rate 1e-4 \
 --weight_decay 1e-4 \
 --generation_num_beams 1 \
 --predict_with_generate True \
