@@ -1,6 +1,6 @@
 import numpy as np
 from tqdm import tqdm
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score
 from transformers import EvalPrediction
 
 class Seq2SeqMetrics :
@@ -25,15 +25,19 @@ class Seq2SeqMetrics :
             ref_str = ref_strings[i]
 
             if len(pred_str) != len(ref_str) :
-                f1 = 0.0
                 wrong_size += 1.0
-            else :
-                f1 = f1_score(ref_str, 
-                    pred_str, 
-                    labels=list(set(ref_str)),
-                    average='macro'
-                )
 
+                if len(pred_str) < len(ref_str) :
+                    gap_size = len(ref_str) - len(pred_str)
+                    pred_str = pred_str + ["X"] * gap_size
+                else :
+                    pred_str = pred_str[:len(ref_str)]
+
+            f1 = f1_score(ref_str, 
+                pred_str, 
+                labels=list(set(ref_str)),
+                average='macro'
+            )
             eval_f1 += f1
         
         eval_f1 /= eval_size
@@ -63,6 +67,7 @@ class NERMetrics :
         references = pred.label_ids
 
         eval_f1 = 0.0
+        eval_binary_acc = 0.0
         eval_size = len(references)
         for i in tqdm(range(eval_size)) :
             ref = references[i].tolist()
@@ -79,5 +84,16 @@ class NERMetrics :
             )
             eval_f1 += f1
 
+            ref_bi, pred_bi = self.convert_binary(ref, pred)
+            acc = accuracy_score(ref_bi, pred_bi)
+            eval_binary_acc += acc
+
         eval_f1 /= eval_size
-        return {"f1" : eval_f1}
+        eval_binary_acc /= eval_size
+        return {"f1" : eval_f1, "binary_acc" : eval_binary_acc}
+
+    def convert_binary(self, ref, pred) :
+        ref_bi = [1.0 if r > 0.0 else 0.0 for r in ref]
+        pred_bi = [1.0 if p > 0.0 else 0.0 for p in pred]
+
+        return ref_bi, pred_bi

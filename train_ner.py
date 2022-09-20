@@ -78,6 +78,9 @@ def main():
         datasets = datasets.remove_columns(["sentences"])
         print(datasets)
 
+        train_dset = datasets["train"]
+        train_labels = train_dset["labels"]
+
         # Loading config & Model
         print("\nLoading Model")
         config = T5Config.from_pretrained(model_args.PLM)

@@ -52,31 +52,22 @@ class NEREncoder :
             for i, offset_list in enumerate(offset_mappings) :
                 tokenized_labels = []
                 raw_label = raw_labels[i]
-                for j, offset in enumerate(offset_list) :
+                for offset in offset_list :
                     start_p, end_p = offset
-                    token_id = model_inputs["input_ids"][i][j]
-                    token_str = self.tokenizer.convert_ids_to_tokens(token_id)
-
                     if start_p == 0 and end_p == 0 :
                         label = "O"    
                     else :
-                        if start_p > 0 :
-                            if len(token_str) > 1 and token_str[0] == "▁" :
-                                start_p += 1
 
-                        flag = True
+                        label = "O"
                         for j in range(start_p, end_p) :
-                            if raw_label[j] == 'O' :
-                                flag = False 
+                            char_label = raw_label[j]
+
+                            if char_label != "O" :
+                                label = char_label
                                 break
                         
-                        if flag == True :
-                            label = raw_label[start_p]
-                        else :
-                            label = 'O'
-                    
-                    label = self.label_dict[label]
-                    tokenized_labels.append(label)
+                    tok_label = self.label_dict[label]
+                    tokenized_labels.append(tok_label)
                 model_labels.append(tokenized_labels)
             
             model_inputs["labels"] = model_labels

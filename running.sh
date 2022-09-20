@@ -4,6 +4,7 @@ python train_seq2seq.py \
 --seed 42 \
 --group_name Named_Entity_Distinguish \
 --fold_size 5 \
+--overwrite_output_dir \
 --num_train_epochs 3 \
 --per_device_train_batch_size 16 \
 --per_device_eval_batch_size 16 \
@@ -29,6 +30,7 @@ python train_ner.py \
 --do_eval \
 --seed 42 \
 --group_name Named_Entity_Detect \
+--overwrite_output_dir \
 --fold_size 5 \
 --num_train_epochs 3 \
 --per_device_train_batch_size 16 \
