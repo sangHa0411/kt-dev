@@ -2,9 +2,13 @@ data
 exps
 checkpoints
 logs
+mecab-0.996-ko-0.9.2
+mecab-0.996-ko-0.9.2.tar.gz
+npm-debug.log
+mecab.sh
 wandb
 wandb.env
 __pycache__
 *.zip
-*.ipynb
+
 .DS_Store

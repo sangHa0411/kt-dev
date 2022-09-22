@@ -27,7 +27,7 @@ class Seq2SeqEncoder :
 
 class NEREncoder :
 
-    def __init__(self, tokenizer, max_length, label_dict):
+    def __init__(self, tokenizer, max_length, label_dict=None):
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.label_dict = label_dict

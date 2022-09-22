@@ -8,7 +8,7 @@ class Loader :
         self.data_dir = data_dir
         self.data_name = data_name
 
-    def load(self) :
+    def load(self, test_flag=False) :
         raw_data = os.path.join(self.data_dir, self.data_name)
 
         with open(raw_data, "r") as f :
@@ -17,5 +17,7 @@ class Loader :
         dataset = []
         for sen in sentences :
             dataset.append(sen[:-1])
-        random.shuffle(dataset)
+
+        if not test_flag :
+            random.shuffle(dataset)
         return dataset

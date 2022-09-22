@@ -1,3 +1,4 @@
+# Seq2Seq
 python train_seq2seq.py \
 --do_train \
 --do_eval \
@@ -25,6 +26,7 @@ python train_seq2seq.py \
 --generation_max_length 32 \
 --warmup_ratio 0.05
 
+# NER
 python train_ner.py \
 --do_train \
 --do_eval \
@@ -42,6 +44,8 @@ python train_ner.py \
 --eval_steps 500 \
 --logging_steps 100 \
 --save_total_limit 5 \
+--load_best_model_at_end True \
+--metric_for_best_model f1 \
 --output_dir ./exps \
 --learning_rate 3e-5 \
 --weight_decay 1e-4 \
