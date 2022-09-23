@@ -4,10 +4,12 @@ import torch
 import random
 import numpy as np
 import wandb
+import transformers
 import multiprocessing
 from dotenv import load_dotenv
 from datasets import DatasetDict
 from models.model import T5EncoderModel
+from models.scheduler import get_noam_scheduler
 from utils.metrics import NERMetrics
 from utils.loader import Loader
 from utils.parser import NERParser
@@ -110,6 +112,23 @@ def main():
             tokenizer=tokenizer,
             compute_metrics=compute_metrics
         )
+
+        if training_args.use_noam :
+            optimizer = transformers.AdamW(
+                params=model.parameters(),
+                lr=training_args.learning_rate,
+                betas=(training_args.adam_beta1, training_args.adam_beta2),
+                eps=training_args.adam_epsilon
+            )
+            max_steps = training_args.max_steps
+            warmup_steps = int(max_steps * training_args.warmup_ratio)
+            scheduler = get_noam_scheduler(optimizer,
+                num_warmup_steps=warmup_steps,
+                learning_rate=training_args.learning_rate,
+                d_model=config.d_model
+            )
+            trainer.lr_scheduler = scheduler
+
 
         WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
         wandb.login(key=WANDB_AUTH_KEY)
