@@ -55,6 +55,26 @@ class NERParser :
     def __init__(self, ) :
         pass
 
+    def extract(self, dataset) :
+
+        word_list = []
+        tag_list = []
+
+        for data in dataset :
+            tag_info = re.findall("<[^:]+:[A-Z]{2}>", data)
+
+            words = []
+            tags = []
+            for t in tag_info :
+                word, tag = t[1:-1].split(":")
+                words.append(word)
+                tags.append(tag)
+
+            word_list.append(words)
+            tag_list.append(tags)
+
+        return word_list, tag_list
+
     def preprocess(self, data) :
 
         label = ['O'] * len(data)

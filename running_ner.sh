@@ -4,7 +4,7 @@ python train_ner.py \
 --do_train \
 --do_eval \
 --seed 42 \
---PLM /home/work/team08/model/kt-ulm-small \
+--PLM /home/work/team08/model/kt-ulm-base \
 --data_dir /home/work/team08/data_learn \
 --train_data_file klue_ner_train_80.t \
 --eval_data_file klue_ner_test_20.t \
@@ -15,17 +15,13 @@ python train_ner.py \
 --per_device_train_batch_size 32 \
 --per_device_eval_batch_size 16 \
 --max_input_length 128 \
---save_strategy steps \
+--save_strategy no \
 --evaluation_strategy steps \
---save_steps 500 \
 --eval_steps 500 \
 --logging_steps 100 \
---save_total_limit 5 \
---load_best_model_at_end True \
---metric_for_best_model f1 \
 --output_dir ./exps \
 --learning_rate 5e-5 \
---weight_decay 1e-3 \
+--weight_decay 1e-4
 
 # ## Predict
 # python predict_ner.py \

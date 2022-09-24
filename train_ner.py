@@ -1,6 +1,7 @@
 import os
 import json
 import torch
+import copy
 import random
 import numpy as np
 import wandb
@@ -13,8 +14,9 @@ from models.scheduler import get_noam_scheduler
 from utils.metrics import NERMetrics
 from utils.loader import Loader
 from utils.parser import NERParser
-from utils.seperate import Spliter
+from utils.postprocessor import NERPostprocessor
 from utils.encoder import NEREncoder
+from trainer import Trainer
 
 from arguments import ModelArguments, DataTrainingArguments, TrainingArguments, LoggingArguments
 
@@ -23,7 +25,6 @@ from transformers import (
     T5TokenizerFast,
     HfArgumentParser,
     DataCollatorForTokenClassification,
-    Trainer,
 )
 
 def main():
@@ -44,10 +45,18 @@ def main():
     # -- Parsing datasets
     print("\nParse datasets")   
     parser = NERParser()
+    eval_tag_words, eval_tag_names = parser.extract(eval_dataset)
     train_dataset = parser(train_dataset)
-    eval_dataset = parser(eval_dataset)
+    eval_dataset = parser(eval_dataset)    
+    eval_sentences = copy.deepcopy(eval_dataset["sentences"])
+    eval_examples = {"sentences" : eval_sentences,
+        "tag_words" : eval_tag_words,
+        "tag_names" : eval_tag_names
+    }
+    
     datasets = DatasetDict({"train" : train_dataset, "validation" : eval_dataset})
     print(datasets)
+
 
     # -- CPU counts
     cpu_cores = multiprocessing.cpu_count()
@@ -94,11 +103,17 @@ def main():
 
     training_args.output_dir = checkpoint_dir
     training_args.dataloader_num_workers = num_proc
+
+    # Postprocessor
+    inverse_label_dict = {i : t for t, i in label_dict.items()}
+    postprocessor = NERPostprocessor(tokenizer, data_args.max_input_length, inverse_label_dict)
     trainer = Trainer(
         model,
         training_args,
         train_dataset=datasets["train"],
         eval_dataset=datasets["validation"],
+        eval_examples=eval_examples,
+        postprocessor=postprocessor,
         data_collator=data_collator,
         tokenizer=tokenizer,
         compute_metrics=compute_metrics
@@ -126,7 +141,7 @@ def main():
         print("\nEvaluating")
         trainer.evaluate()
 
-    trainer.save_model(target_dir)
+    # trainer.save_model(checkpoint_dir)
     wandb.finish()
 
 
@@ -140,6 +155,7 @@ def seed_everything(seed):
     np.random.seed(seed)
     np.random.default_rng(seed)
     random.seed(seed)
+
 
 if __name__ == "__main__":
     main()
