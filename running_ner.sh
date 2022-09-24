@@ -4,16 +4,15 @@ python train_ner.py \
 --do_train \
 --do_eval \
 --seed 42 \
+--PLM /home/work/team08/model/kt-ulm-small \
+--data_dir /home/work/team08/data_learn \
+--train_data_file klue_ner_train_80.t \
+--eval_data_file klue_ner_test_20.t \
 --group_name Named_Entity_Detect \
 --overwrite_output_dir \
---max_steps 3000 \
---warmup_ratio 0.2 \
---fold_size 4 \
+--warmup_ratio 0.05 \
 --num_train_epochs 3 \
---adam_beta1 0.9 \
---adam_beta1 0.98 \
---adam_epsilon 1e-9 \
---per_device_train_batch_size 16 \
+--per_device_train_batch_size 32 \
 --per_device_eval_batch_size 16 \
 --max_input_length 128 \
 --save_strategy steps \

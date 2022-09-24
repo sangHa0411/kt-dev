@@ -26,8 +26,11 @@ class DataTrainingArguments:
     data_dir: str = field(
         default="data", metadata={"help": "path of data directory"}
     )
-    data_file: str = field(
-        default="klue_ner_train_80.txt", metadata={"help": "name of data"}
+    train_data_file: str = field(
+        default="klue_ner_train_80.t", metadata={"help": "name of train data"}
+    )
+    eval_data_file: str = field(
+        default="klue_ner_test_80.t", metadata={"help": "name of test data"}
     )
 
 @dataclass
