@@ -40,11 +40,16 @@ class Trainer(Trainer):
         checkpoint_dir = f"{PREFIX_CHECKPOINT_DIR}-{self.state.global_step}"
         if self.postprocessor is not None:
             eval_sentences = eval_examples["sentences"]
-            label_tags = (eval_examples["tag_words"], eval_examples["tag_names"])
             print("\nPostprocessing")
-            pred_tags = self.postprocessor(output.predictions, eval_sentences)    
+            pred_tag_words, pred_tag_names = self.postprocessor(output.predictions, eval_sentences)                
+
             print("\nScoring")    
-            score = self.get_score(pred_tags, label_tags)
+            label_tag_words, label_tag_names = (eval_examples["tag_words"], eval_examples["tag_names"])
+            score = self.get_score(pred_tag_words, 
+                pred_tag_names,
+                label_tag_words,
+                label_tag_names
+            )
 
             for key in score :
                 metrics[key] = score[key]
@@ -63,20 +68,29 @@ class Trainer(Trainer):
         return metrics
 
 
-    def get_score(self, predictions, labels) :
+    def get_score(
+        self, 
+        pred_tag_words, 
+        pred_tag_names, 
+        label_tag_words,
+        label_tag_names
+    ) :
         eval_f1 = 0.0
         eval_precision = 0.0
         eval_recall = 0.0
         
-        eval_size = len(predictions[0])
+        eval_size = len(pred_tag_words)
         for i in tqdm(range(eval_size)) :
-            prediction = (predictions[0][i], predictions[1][i])
-            label = (labels[0][i], labels[1][i])
+            prediction = (pred_tag_words[i], pred_tag_names[i])
+            label = (label_tag_words[i], label_tag_names[i])
+            
+            precision, recall, f1 = self.compute_score(prediction, label)
+            eval_precision += precision
+            eval_recall += recall
+            eval_f1 += f1
 
-            score = self.compute_score(prediction, label)
-            eval_f1 += score["f1"]
-            eval_precision += score["precision"]
-            eval_recall += score["recall"]
+            if len(pred_tag_words[i]) != len(label_tag_words[i]) :
+                breakpoint()
 
         eval_f1 /= eval_size
         eval_precision /= eval_size
@@ -129,7 +143,7 @@ class Trainer(Trainer):
             recall = true_p / l_tag_num
             f1 = 2/(1/precision + 1/recall)
 
-        return {"precision" : precision, "recall" : recall, "f1" : f1}
+        return precision, recall, f1
 
 
 

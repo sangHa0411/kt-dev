@@ -23,65 +23,46 @@ class NERPostprocessor :
 
         offsets = tokenized.pop("offset_mapping")
 
-        words = []
-        labels = []
+        words_list = []
+        labels_list = []
 
         for i in tqdm(range(len(pred_ids))) :
             pred = pred_ids[i]
             offset = offsets[i]
+
+            tokens = self.tokenizer.tokenize(sentences[i])
+            tokens.append(self.tokenizer.eos_token)
+
+            pred_valid = pred[:len(offset)]
             sentence = sentences[i]
-            pos = self.get_pos(sentence)
 
-            char_list = list(sentence)
-            tag_list = []
+            words = []
+            labels = []
 
-            if offset[0][0] == offset[1][0] :
-                offset = offset[1:]
-
-            for j in range(len(offset)-1) :
-                start_p, end_p = offset[j]
-                tag = pred[j]
-                tag_list.extend([tag] * (end_p - start_p))
-            tag_list.append(0)
-
-            prev = 0
-            k = 1
-            word_list = []
-            label_list = []
-            while k < len(tag_list) :
-                if tag_list[k] != tag_list[k-1] :
-                    if tag_list[k-1] > 0 :
-                        l = k-1
-                        while pos[l] == "J" :
-                            l -= 1
-
-                        word = [char_list[j] for j in range(prev, l+1)]
-                        word = "".join(word).strip()
-                        word_list.append(word)
-                        label_list.append(self.tag_dict[tag_list[l]])
+            j = 0
+            while j < len(pred_valid) :
+                p = pred_valid[j]
+                if p > 0 :
+                    k = j + 1
+                    while k < len(pred_valid) and (pred_valid[k] > 0 or tokens[k] == '▁') :
+                        k += 1
                     
-                    prev = k
-                k += 1
+                    sub_offset = offset[j:k]
+                    start_p = sub_offset[0][0]
+                    end_p = sub_offset[-1][1]
+
+                    word = sentence[start_p:end_p].strip()
+                    words.append(word)
+
+                    label = self.tag_dict[p]
+                    labels.append(label)
+
+                    j = k                
+                else :
+                    j += 1
             
-            words.append(word_list)
-            labels.append(label_list)
+            words_list.append(words)
+            labels_list.append(labels)
+                    
+        return words_list, labels_list
 
-        return words, labels
-
-    def get_pos(self, data) :
-        i = 0
-        pos_label = []
-        pos_data = self.mecab.pos(data)
-
-        for pos in pos_data :
-            word, tag = pos
-
-            for j in range(len(word)) :
-                pos_label.append(tag[0])
-                i += 1
-            
-            if i < len(data) and data[i] == " " :
-                pos_label.append("U")
-                i += 1
-
-        return pos_label

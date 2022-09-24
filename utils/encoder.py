@@ -46,26 +46,43 @@ class NEREncoder :
         offset_mappings = model_inputs.pop("offset_mapping")
 
         if "labels" in dataset :
-            raw_labels = dataset["labels"]
 
+            raw_labels = dataset["labels"]
             model_labels = []
             for i, offset_list in enumerate(offset_mappings) :
-                tokenized_labels = []
+
+                tokenized_tokens = self.tokenizer.tokenize(docs[i])
+
                 raw_label = raw_labels[i]
-                for offset in offset_list :
+                tokenized_labels = []
+                
+                for j in range(len(offset_list) - 1) :
+                    offset = offset_list[j]
                     start_p, end_p = offset
                     if start_p == 0 and end_p == 0 :
-                        label = "O"    
+                        label = 'O'    
                     else :
 
-                        label = "O"
-                        for j in range(start_p, end_p) :
-                            char_label = raw_label[j]
+                        if tokenized_tokens[j][0] == '▁' : 
+                            start_p += 1
 
-                            if char_label != "O" :
-                                label = char_label
-                                break
-                        
+                        if start_p < end_p :
+                            nontag_flag = False
+                            for k in range(start_p, end_p) :
+                                char_label = raw_label[k]
+
+                                if char_label == 'O' :
+                                    nontag_flag = True
+                                    break
+
+                            if nontag_flag == True :
+                                label = 'O'
+                            else :
+                                label = raw_label[start_p]
+
+                        else :
+                            label = 'O'
+
                     tok_label = self.label_dict[label]
                     tokenized_labels.append(tok_label)
                 model_labels.append(tokenized_labels)

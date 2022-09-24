@@ -80,10 +80,10 @@ class NERParser :
         label = ['O'] * len(data)
         tag_iter = re.finditer("<[^:]+:[A-Z]{2}>", data)
 
-        for iter in tag_iter :
+        for it in tag_iter :
 
-            start_p, end_p = iter.span()
-            group = iter.group()
+            start_p, end_p = it.span()
+            group = it.group()
             word, tag = group[1:-1].split(':')
 
             start_pos = start_p + 1
@@ -104,8 +104,23 @@ class NERParser :
             if l != "X" :
                 x.append(c)
                 y.append(l)
+        
+        sen = ''.join(x)
+        sen, y = self.delete_blank(sen, y)
+        return sen, y
 
-        return "".join(x), y
+    def delete_blank(self, sentence, label) :
+
+        blank_flag = re.search("\s{2,}", sentence)
+
+        while blank_flag is not None :
+            start_p, end_p = blank_flag.span()
+            sentence = sentence[:start_p+1] + sentence[end_p:]
+            label = label[:start_p+1] + label[end_p:]
+
+            blank_flag = re.search("\s{2,}", sentence)
+
+        return sentence, label
 
 
     def __call__(self, dataset) :
