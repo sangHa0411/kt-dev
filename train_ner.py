@@ -57,7 +57,6 @@ def main():
     datasets = DatasetDict({"train" : train_dataset, "validation" : eval_dataset})
     print(datasets)
 
-
     # -- CPU counts
     cpu_cores = multiprocessing.cpu_count()
     num_proc = int(cpu_cores // 2)
@@ -83,7 +82,7 @@ def main():
     # Loading config & Model
     print("\nLoading Model")
     config = T5Config.from_pretrained(model_args.PLM)
-    config.label_size = len(label_dict)
+    config.num_labels = len(label_dict)
     model = T5EncoderModel.from_pretrained(model_args.PLM, config=config)
 
     # DataCollator

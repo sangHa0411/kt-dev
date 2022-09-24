@@ -15,6 +15,22 @@ from transformers.utils.model_parallel_utils import assert_device_map, get_devic
 from transformers.models.t5.configuration_t5 import T5Config
 
 
+class T5ClassificationHead(nn.Module):
+
+    def __init__(self, config):
+        super().__init__()
+        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        self.dropout = nn.Dropout(config.dropout_rate)
+        self.out_proj = nn.Linear(config.hidden_size, config.num_labels)
+
+    def forward(self, x):
+        x = self.dropout(x)
+        x = self.dense(x)
+        x = torch.tanh(x)
+        x = self.dropout(x)
+        x = self.out_proj(x)
+        return x
+
 class T5ForConditionalGeneration(T5PreTrainedModel):
 
     def __init__(self, config: T5Config):
@@ -254,7 +270,7 @@ class T5EncoderModel(T5PreTrainedModel):
         self.encoder = T5Stack(encoder_config, self.shared)
 
         self.dropout = nn.Dropout(config.dropout_rate)
-        self.classifier = nn.Linear(config.d_model, config.label_size, bias=False)
+        self.classifier = T5ClassificationHead(config)
 
         # Model parallel
         self.model_parallel = False
