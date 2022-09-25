@@ -63,25 +63,26 @@ class NEREncoder :
                         label = 'O'    
                     else :
 
-                        if tokenized_tokens[j][0] == '▁' : 
-                            start_p += 1
+                        if start_p + 1 < end_p :
+                            
+                            if tokenized_tokens[j][0] == '▁' and docs[i][start_p] == ' ' : 
+                                start_p = start_p + 1
 
-                        if start_p < end_p :
-                            nontag_flag = False
+                            tag_flag = False
                             for k in range(start_p, end_p) :
                                 char_label = raw_label[k]
 
-                                if char_label == 'O' :
-                                    nontag_flag = True
+                                if char_label != 'O' :
+                                    tag_flag = True
                                     break
 
-                            if nontag_flag == True :
-                                label = 'O'
-                            else :
+                            if tag_flag == True :
                                 label = raw_label[start_p]
+                            else :
+                                label = 'O'
 
                         else :
-                            label = 'O'
+                            label = raw_label[start_p]
 
                     tok_label = self.label_dict[label]
                     tokenized_labels.append(tok_label)

@@ -8,6 +8,7 @@ npm-debug.log
 mecab.sh
 wandb
 wandb.env
+analysis.txt
 __pycache__
 *.ipynb
 *.zip

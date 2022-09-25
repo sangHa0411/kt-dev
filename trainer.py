@@ -89,9 +89,6 @@ class Trainer(Trainer):
             eval_recall += recall
             eval_f1 += f1
 
-            if len(pred_tag_words[i]) != len(label_tag_words[i]) :
-                breakpoint()
-
         eval_f1 /= eval_size
         eval_precision /= eval_size
         eval_recall /= eval_size

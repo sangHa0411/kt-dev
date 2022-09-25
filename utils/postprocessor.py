@@ -44,7 +44,7 @@ class NERPostprocessor :
                 p = pred_valid[j]
                 if p > 0 :
                     k = j + 1
-                    while k < len(pred_valid) and (pred_valid[k] > 0 or tokens[k] == '▁') :
+                    while k < len(pred_valid) and pred_valid[k] == p :
                         k += 1
                     
                     sub_offset = offset[j:k]
@@ -60,7 +60,7 @@ class NERPostprocessor :
                     j = k                
                 else :
                     j += 1
-            
+
             words_list.append(words)
             labels_list.append(labels)
                     

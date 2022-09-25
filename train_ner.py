@@ -37,11 +37,11 @@ def main():
     # -- Loading datasets
     print("\nLoad datasets")
     train_data_loader = Loader(data_args.data_dir, data_args.train_data_file)
-    train_dataset = train_data_loader.load()
-
+    train_dataset = train_data_loader.load(test_flag=False)
+    
     eval_data_loader = Loader(data_args.data_dir, data_args.eval_data_file)
-    eval_dataset = eval_data_loader.load()
-
+    eval_dataset = eval_data_loader.load(test_flag=False)
+ 
     # -- Parsing datasets
     print("\nParse datasets")   
     parser = NERParser()
@@ -59,7 +59,7 @@ def main():
 
     # -- CPU counts
     cpu_cores = multiprocessing.cpu_count()
-    num_proc = int(cpu_cores // 2)
+    num_proc = 1 # int(cpu_cores // 2)
 
     # -- Loading tokenizer
     print("\nLoad tokenizer")
@@ -69,6 +69,8 @@ def main():
     # -- Encoder
     label_dict = {"O" : 0, "QT" : 1, "DT" : 2, "PS" : 3, "LC" : 4, "TI" : 5, "OG" : 6}
     encoder = NEREncoder(tokenizer, data_args.max_input_length, label_dict)
+
+    eval_dataset_ = eval_dataset.map(encoder, batched=True, num_proc=num_proc)
 
     # -- Encoding datasets
     print("\nEncode datasets")
@@ -118,17 +120,17 @@ def main():
         compute_metrics=compute_metrics
     )
 
-    WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
-    wandb.login(key=WANDB_AUTH_KEY)
+    # WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
+    # wandb.login(key=WANDB_AUTH_KEY)
 
-    args = training_args
-    wandb_name = f"EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}"
-    wandb.init(
-        entity="sangha0411",
-        project=logging_args.project_name, 
-        name=wandb_name,
-        group=logging_args.group_name)
-    wandb.config.update(training_args)
+    # args = training_args
+    # wandb_name = f"EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}"
+    # wandb.init(
+    #     entity="sangha0411",
+    #     project=logging_args.project_name, 
+    #     name=wandb_name,
+    #     group=logging_args.group_name)
+    # wandb.config.update(training_args)
 
     # Training
     if training_args.do_train :
@@ -141,7 +143,7 @@ def main():
         trainer.evaluate()
 
     # trainer.save_model(checkpoint_dir)
-    wandb.finish()
+    # wandb.finish()
 
 
 def seed_everything(seed):
