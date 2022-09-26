@@ -94,6 +94,7 @@ def main():
     )
 
     # Metrics
+    score_calculator = ScoreCalculator()
     metrics = NERMetrics()
     compute_metrics = metrics.compute_metrics
 
@@ -114,6 +115,7 @@ def main():
         train_dataset=datasets["train"],
         eval_dataset=datasets["validation"],
         eval_examples=eval_examples,
+        score_calculator=score_calculator,
         postprocessor=postprocessor,
         data_collator=data_collator,
         tokenizer=tokenizer,
@@ -140,7 +142,8 @@ def main():
     # Evaluation
     if training_args.do_eval :
         print("\nEvaluating")
-        trainer.evaluate()
+        metrics = trainer.evaluate()
+        print(metrics)
 
     # trainer.save_model(checkpoint_dir)
     # wandb.finish()

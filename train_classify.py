@@ -8,7 +8,7 @@ import multiprocessing
 from dotenv import load_dotenv
 from datasets import DatasetDict
 from models.model import T5ForConditionalGeneration
-from utils.metrics import Seq2SeqClassifyMetrics
+from utils.metrics import Seq2SeqClassifyMetrics, Scorer
 from utils.loader import Loader
 from utils.parser import Seq2SeqParser
 from utils.seperate import Spliter
@@ -125,7 +125,8 @@ def main():
     # Evaluation
     if training_args.do_eval :
         print("\nEvaluating")
-        trainer.evaluate()
+        metrics = trainer.evaluate()
+        print(metrics)
 
     # trainer.save_model(target_dir)
     # wandb.finish()

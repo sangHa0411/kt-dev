@@ -11,9 +11,10 @@ from transformers.trainer_utils import PREFIX_CHECKPOINT_DIR
 
 
 class Trainer(Trainer):
-    def __init__(self, *args, eval_examples=None, postprocessor=None, **kwargs):
+    def __init__(self, *args, eval_examples=None, score_calculator=None, postprocessor=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.eval_examples = eval_examples
+        self.score_calculator = score_calculator
         self.postprocessor = postprocessor
 
     def evaluate(
@@ -47,7 +48,7 @@ class Trainer(Trainer):
 
             print("\nScoring")    
             label_tag_words, label_tag_names = (eval_examples["tag_words"], eval_examples["tag_names"])
-            score = self.get_score(pred_tag_words, 
+            score = self.score_calculator.get_score(pred_tag_words, 
                 pred_tag_names,
                 label_tag_words,
                 label_tag_names
@@ -70,85 +71,10 @@ class Trainer(Trainer):
         return metrics
 
 
-    def get_score(
-        self, 
-        pred_tag_words, 
-        pred_tag_names, 
-        label_tag_words,
-        label_tag_names
-    ) :
-        eval_f1 = 0.0
-        eval_precision = 0.0
-        eval_recall = 0.0
-        
-        eval_size = len(pred_tag_words)
-        for i in tqdm(range(eval_size)) :
-            prediction = (pred_tag_words[i], pred_tag_names[i])
-            label = (label_tag_words[i], label_tag_names[i])
-            
-            precision, recall, f1 = self.compute_score(prediction, label)
-            eval_precision += precision
-            eval_recall += recall
-            eval_f1 += f1
-
-        eval_f1 /= eval_size
-        eval_precision /= eval_size
-        eval_recall /= eval_size
-        return {"f1" : eval_f1, "precision" : eval_precision, "recall" : eval_recall}
-
-
-    def compute_score(self, prediction, label) :
-        pred_tag_words, pred_tag_names = prediction
-        label_tag_words, label_tag_names = label
-
-        l_tag_num = len(label_tag_words)
-        p_tag_num = len(pred_tag_words)
-        p_tag_flag = [False] * p_tag_num 
-
-        true_p = 0.0
-        false_p = 0.0
-        false_n = 0.0
-
-        for i in range(l_tag_num) :
-            l_tag_word = label_tag_words[i]
-            l_tag_name = label_tag_names[i]
-
-            flag = False
-
-            for j in range(p_tag_num) :
-                p_tag_word = pred_tag_words[j]
-                p_tag_name = pred_tag_names[j]
-
-                if (l_tag_word in p_tag_word) or (p_tag_word) in (l_tag_word) :
-                    if l_tag_name == p_tag_name :
-                        if p_tag_flag[j] == False :
-                            true_p += 1
-                            p_tag_flag[j] = True
-                            flag = True
-
-            if flag == False :
-                false_n += 1.0
-
-        for p_flag in p_tag_flag :
-            if p_flag == False :
-                false_p += 1.0
-
-        if true_p == 0.0 :
-            precision = 0.0
-            recall = 0.0
-            f1 = 0.0
-        else :
-            precision = true_p / (true_p + false_p)
-            recall = true_p / l_tag_num
-            f1 = 2/(1/precision + 1/recall)
-
-        return precision, recall, f1
-
-
-
 class Seq2SeqTrainer(Seq2SeqTrainer):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, eval_examples=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.eval_examples = eval_examples
 
     def _prepare_input(self, data: Union[torch.Tensor, Any]) -> Union[torch.Tensor, Any]:
         """
