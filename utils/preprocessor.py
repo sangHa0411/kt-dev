@@ -1,16 +1,12 @@
+import collections
+import pandas as pd
+from tqdm import tqdm
+from datasets import Dataset
 
-
-class Seq2SeqPreprocessor :
-    def __init__(self, tokenizer) :
+class Seq2SeqClassifyPreprocessor :
+    def __init__(self, tokenizer, tag_dict) :
         self.tokenizer = tokenizer
-        self.label_dict = {
-            "QT" : "수량",
-            "DT" : "날짜",
-            "PS" : "사람",
-            "LC" : "장소",
-            "TI" : "시간",
-            "OG" : "기관"
-        }
+        self.tag_dict = tag_dict
 
     def __call__(self, dataset) :
 
@@ -21,23 +17,60 @@ class Seq2SeqPreprocessor :
         for i in range(size) :
             sentence = dataset['sentences'][i]
             entities = dataset['entities'][i]
+            label = dataset['labels'][i]
 
-            if "labels" in dataset :
-                label = dataset['labels'][i]
-            else :
-                label = None
-            
             input_sen = "개체명 : " + ", ".join(entities) + ". 문서 : " + sentence
             inputs.append(input_sen)
+            label = [self.tag_dict[l] for l in label]
+            sep_token = ", "
+            label_sen = sep_token.join(label)
+            labels.append(label_sen)
 
-            if label is not None :
-                label = [self.label_dict[l] for l in label]
-                sep_token = ", "
-                label_sen = sep_token.join(label)
-                labels.append(label_sen)
-            else :
-                labels.append("")
 
         dataset['inputs'] = inputs
         dataset['labels'] = labels
         return dataset
+
+
+class Seq2SeqSearchPreprocessor :
+    def __init__(self, tag_dict) :
+        self.tag_dict = tag_dict
+
+    def __call__(self, dataset) :
+
+        inputs = []
+        labels = []
+
+        size = len(dataset)
+        for i in tqdm(range(size)) :
+            sentence = dataset[i]['sentences']
+            entities = dataset[i]['entities']
+            label = dataset[i]['labels']
+
+            default_dict = collections.defaultdict(list)
+            for e, l in zip(entities, label) :
+                default_dict[l].append(e)
+
+            input_sens = []
+            output_sens = []
+
+            for tag in self.tag_dict :
+                tag_name = self.tag_dict[tag]
+                word_list = default_dict[tag]
+
+                prefix = "개체 유형 : " + tag_name
+                input_sen = prefix + ', ' + sentence
+                if len(word_list) == 0 :
+                    output_sen = '없음'
+                else :
+                    output_sen = ', '.join(word_list)
+
+                input_sens.append(input_sen)
+                output_sens.append(output_sen)
+
+            inputs.extend(input_sens)
+            labels.extend(output_sens)
+
+        df = pd.DataFrame({'iputs' : inputs, 'labels' : labels})
+        dset = Dataset.from_pandas(df)
+        return dset

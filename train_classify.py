@@ -1,22 +1,20 @@
 import os
 import json
 import torch
-import copy
 import random
 import numpy as np
 import wandb
-import transformers
 import multiprocessing
 from dotenv import load_dotenv
 from datasets import DatasetDict
-from models.model import T5EncoderModel
-from models.scheduler import get_noam_scheduler
-from utils.metrics import NERMetrics
+from models.model import T5ForConditionalGeneration
+from utils.metrics import Seq2SeqClassifyMetrics
 from utils.loader import Loader
-from utils.parser import NERParser
-from utils.postprocessor import NERPostprocessor
-from utils.encoder import NEREncoder
-from trainer import Trainer
+from utils.parser import Seq2SeqParser
+from utils.seperate import Spliter
+from utils.preprocessor import Seq2SeqClassifyPreprocessor
+from utils.encoder import Seq2SeqEncoder
+from trainer import Seq2SeqTrainer
 
 from arguments import ModelArguments, DataTrainingArguments, TrainingArguments, LoggingArguments
 
@@ -24,7 +22,7 @@ from transformers import (
     T5Config,
     T5TokenizerFast,
     HfArgumentParser,
-    DataCollatorForTokenClassification,
+    DataCollatorForSeq2Seq,
 )
 
 def main():
@@ -41,21 +39,6 @@ def main():
     
     eval_data_loader = Loader(data_args.data_dir, data_args.eval_data_file)
     eval_dataset = eval_data_loader.load(test_flag=True)
- 
-    # -- Parsing datasets
-    print("\nParse datasets")   
-    parser = NERParser()
-    eval_tag_words, eval_tag_names = parser.extract(eval_dataset)
-    train_dataset = parser(train_dataset)
-    eval_dataset = parser(eval_dataset)    
-    eval_sentences = copy.deepcopy(eval_dataset["sentences"])
-    eval_examples = {"sentences" : eval_sentences,
-        "tag_words" : eval_tag_words,
-        "tag_names" : eval_tag_names
-    }
-    
-    datasets = DatasetDict({"train" : train_dataset, "validation" : eval_dataset})
-    print(datasets)
 
     # -- CPU counts
     cpu_cores = multiprocessing.cpu_count()
@@ -65,56 +48,58 @@ def main():
     print("\nLoad tokenizer")
     model_name = model_args.PLM
     tokenizer = T5TokenizerFast.from_pretrained(model_name, use_fast=True)
-    
-    # -- Encoder
-    label_dict = {"O" : 0, "QT" : 1, "DT" : 2, "PS" : 3, "LC" : 4, "TI" : 5, "OG" : 6}
-    encoder = NEREncoder(tokenizer, data_args.max_input_length, label_dict)
-
-    eval_dataset_ = eval_dataset.map(encoder, batched=True, num_proc=num_proc)
-
-    # -- Encoding datasets
-    print("\nEncode datasets")
-    datasets = datasets.map(encoder, batched=True, num_proc=num_proc)
-    datasets = datasets.remove_columns(["sentences"])
-    print(datasets)
 
     output_dir = training_args.output_dir
     load_dotenv(dotenv_path=logging_args.dotenv_path)
 
+    # Parsing datasets
+    print("\nParse datasets")
+    parser = Seq2SeqParser()
+    train_dataset = parser(train_dataset)
+    eval_dataset = parser(eval_dataset)
+
+    datasets = DatasetDict({"train" : train_dataset, "validation" : eval_dataset})
+    print(datasets)
+
+    # Preprocessing datasets
+    print("\nPreprocess datasets")
+    tag_dict = {"QT" : "수량", "DT" : "날짜", "PS" : "사람", "LC" : "장소", "TI" : "시간", "OG" : "기관"}
+    preprocessor = Seq2SeqClassifyPreprocessor(tokenizer, tag_dict)
+    datasets = datasets.map(preprocessor, batched=True, num_proc=num_proc)
+    datasets = datasets.remove_columns(["sentences", "entities"])
+    print(datasets)
+
+    # Encoding datasets
+    print("\nEncode datasets")
+    encoder = Seq2SeqEncoder(tokenizer, data_args.max_input_length, data_args.max_output_length)
+    datasets = datasets.map(encoder, batched=True, num_proc=num_proc)
+    datasets = datasets.remove_columns(["inputs"])
+    print(datasets)
+
     # Loading config & Model
     print("\nLoading Model")
     config = T5Config.from_pretrained(model_args.PLM)
-    config.num_labels = len(label_dict)
-    model = T5EncoderModel.from_pretrained(model_args.PLM, config=config)
+    model = T5ForConditionalGeneration.from_pretrained(model_args.PLM, config=config)
 
     # DataCollator
-    data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer, 
-        padding=True,
-        max_length=data_args.max_input_length   
-    )
+    data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
 
     # Metrics
-    metrics = NERMetrics()
+    metrics = Seq2SeqClassifyMetrics(tokenizer)
     compute_metrics = metrics.compute_metrics
 
     # Trainer
-    checkpoint_dir = os.path.join(training_args.output_dir, "ner")
-    if not os.path.exists(checkpoint_dir) :
-        os.mkdir(checkpoint_dir)
+    target_dir = os.path.join(output_dir, "classify")
+    if not os.path.exists(target_dir) :
+        os.mkdir(target_dir)
 
-    training_args.output_dir = checkpoint_dir
+    training_args.output_dir = target_dir
     training_args.dataloader_num_workers = num_proc
-
-    # Postprocessor
-    inverse_label_dict = {i : t for t, i in label_dict.items()}
-    postprocessor = NERPostprocessor(tokenizer, data_args.max_input_length, inverse_label_dict)
-    trainer = Trainer(
+    trainer = Seq2SeqTrainer(
         model,
         training_args,
         train_dataset=datasets["train"],
         eval_dataset=datasets["validation"],
-        eval_examples=eval_examples,
-        postprocessor=postprocessor,
         data_collator=data_collator,
         tokenizer=tokenizer,
         compute_metrics=compute_metrics
@@ -142,7 +127,7 @@ def main():
         print("\nEvaluating")
         trainer.evaluate()
 
-    # trainer.save_model(checkpoint_dir)
+    # trainer.save_model(target_dir)
     # wandb.finish()
 
 

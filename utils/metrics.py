@@ -3,7 +3,7 @@ from tqdm import tqdm
 from sklearn.metrics import f1_score
 from transformers import EvalPrediction
 
-class Seq2SeqMetrics :
+class Seq2SeqClassifyMetrics :
 
     def __init__(self, tokenizer) :
         self.tokenizer = tokenizer
