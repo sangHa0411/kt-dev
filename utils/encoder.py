@@ -77,7 +77,7 @@ class NEREncoder :
                                     break
 
                             if tag_flag == True :
-                                label = raw_label[start_p]
+                                label = char_label
                             else :
                                 label = 'O'
 
@@ -86,6 +86,7 @@ class NEREncoder :
 
                     tok_label = self.label_dict[label]
                     tokenized_labels.append(tok_label)
+
                 model_labels.append(tokenized_labels)
             
             model_inputs["labels"] = model_labels
