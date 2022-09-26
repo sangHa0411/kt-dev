@@ -114,7 +114,8 @@ def main():
     #     entity="sangha0411",
     #     project=logging_args.project_name, 
     #     name=wandb_name,
-    #     group=logging_args.group_name)
+    #     group=logging_args.group_name
+    # )
     # wandb.config.update(training_args)
 
     # Training
@@ -125,8 +126,8 @@ def main():
     # Evaluation
     if training_args.do_eval :
         print("\nEvaluating")
-        metrics = trainer.evaluate()
-        print(metrics)
+        eval_metrics = trainer.evaluate()
+        print(eval_metrics)
 
     # trainer.save_model(target_dir)
     # wandb.finish()

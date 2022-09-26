@@ -38,7 +38,7 @@ def main():
     train_dataset = train_data_loader.load(test_flag=False)
     
     eval_data_loader = Loader(data_args.data_dir, data_args.eval_data_file)
-    eval_dataset = eval_data_loader.load(test_flag=True)
+    eval_dataset = eval_data_loader.load(test_flag=False)
 
     # -- CPU counts
     cpu_cores = multiprocessing.cpu_count()
@@ -91,8 +91,9 @@ def main():
     data_collator = DataCollatorForSeq2Seq(tokenizer=tokenizer, model=model)
 
     # Metrics
+    tag_list = list(tag_dict.keys())
     score_calculator = ScoreCalculator()
-    metrics = Seq2SeqSearchMetrics(tokenizer, score_calculator, eval_examples, tag_dict)
+    metrics = Seq2SeqSearchMetrics(tokenizer, score_calculator, eval_examples, tag_list)
     compute_metrics = metrics.compute_metrics
 
     # Trainer
@@ -112,17 +113,18 @@ def main():
         compute_metrics=compute_metrics
     )
 
-    # WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
-    # wandb.login(key=WANDB_AUTH_KEY)
+    WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
+    wandb.login(key=WANDB_AUTH_KEY)
 
-    # args = training_args
-    # wandb_name = f"EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}"
-    # wandb.init(
-    #     entity="sangha0411",
-    #     project=logging_args.project_name, 
-    #     name=wandb_name,
-    #     group=logging_args.group_name)
-    # wandb.config.update(training_args)
+    args = training_args
+    wandb_name = f"EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}"
+    wandb.init(
+        entity="sangha0411",
+        project=logging_args.project_name, 
+        name=wandb_name,
+        group=logging_args.group_name
+    )
+    wandb.config.update(training_args)
 
     # Training
     if training_args.do_train :
@@ -132,11 +134,11 @@ def main():
     # Evaluation
     if training_args.do_eval :
         print("\nEvaluating")
-        metrics = trainer.evaluate()
-        print(metrics)
+        eval_metrics = trainer.evaluate()
+        print(eval_metrics)
 
     # trainer.save_model(target_dir)
-    # wandb.finish()
+    wandb.finish()
 
 
 def seed_everything(seed):

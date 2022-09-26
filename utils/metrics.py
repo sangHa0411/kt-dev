@@ -137,11 +137,11 @@ class Seq2SeqClassifyMetrics :
 
 class Seq2SeqSearchMetrics :
 
-    def __init__(self, tokenizer, score_calculator, eval_examples, tag_dict) :
+    def __init__(self, tokenizer, score_calculator, eval_examples, tag_list) :
         self.tokenizer = tokenizer
         self.score_calculator = score_calculator
         self.eval_examples = eval_examples
-        self.tag_list = list(tag_dict.keys())
+        self.tag_list = tag_list
 
     def compute_metrics(self, pred: EvalPrediction):
         eval_entities, eval_labels = self.eval_examples["entities"], self.eval_examples["labels"]
@@ -170,7 +170,7 @@ class Seq2SeqSearchMetrics :
 
             pred_entities.append(entities)
             pred_labels.append(labels)
-
+        
         score = self.score_calculator.get_score(pred_entities, pred_labels, eval_entities, eval_labels)
         return score
 

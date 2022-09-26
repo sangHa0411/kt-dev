@@ -10,8 +10,7 @@ import multiprocessing
 from dotenv import load_dotenv
 from datasets import DatasetDict
 from models.model import T5EncoderModel
-from models.scheduler import get_noam_scheduler
-from utils.metrics import NERMetrics
+from utils.metrics import NERMetrics, ScoreCalculator
 from utils.loader import Loader
 from utils.parser import NERParser
 from utils.postprocessor import NERPostprocessor
@@ -122,17 +121,18 @@ def main():
         compute_metrics=compute_metrics
     )
 
-    # WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
-    # wandb.login(key=WANDB_AUTH_KEY)
+    WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
+    wandb.login(key=WANDB_AUTH_KEY)
 
-    # args = training_args
-    # wandb_name = f"EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}"
-    # wandb.init(
-    #     entity="sangha0411",
-    #     project=logging_args.project_name, 
-    #     name=wandb_name,
-    #     group=logging_args.group_name)
-    # wandb.config.update(training_args)
+    args = training_args
+    wandb_name = f"EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}"
+    wandb.init(
+        entity="sangha0411",
+        project=logging_args.project_name, 
+        name=wandb_name,
+        group=logging_args.group_name
+    )
+    wandb.config.update(training_args)
 
     # Training
     if training_args.do_train :
@@ -142,11 +142,11 @@ def main():
     # Evaluation
     if training_args.do_eval :
         print("\nEvaluating")
-        metrics = trainer.evaluate()
-        print(metrics)
+        eval_metrics = trainer.evaluate()
+        print(eval_metrics)
 
     # trainer.save_model(checkpoint_dir)
-    # wandb.finish()
+    wandb.finish()
 
 
 def seed_everything(seed):
