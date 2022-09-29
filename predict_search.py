@@ -154,7 +154,7 @@ def main():
             
     results = pd.DataFrame({"Named Entity" : items_list})
     path = os.path.join(training_args.output_dir, OUTPUT_FILE)
-    results.to_csv(path)
+    results.to_csv(path, index=False)
 
 
 if __name__ == "__main__":

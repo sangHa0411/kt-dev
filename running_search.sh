@@ -22,6 +22,7 @@ python train_search.py \
 --logging_dir ./logs \
 --learning_rate 5e-5 \
 --weight_decay 1e-2 \
+--report_to none \
 --generation_num_beams 1 \
 --predict_with_generate True \
 --generation_max_length 32 \
@@ -34,7 +35,7 @@ python predict_search.py \
 --eval_data_file klue_ner_test_20.t \
 --per_device_eval_batch_size 64 \
 --max_input_length 128 \
---generation_num_beams 1 \
+--generation_num_beams 3 \
 --predict_with_generate True \
 --generation_max_length 32 \
 --output_dir ./results
