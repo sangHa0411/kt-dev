@@ -1,15 +1,16 @@
 import os
-import json
-from unittest import result
 import torch
+import copy
 import pandas as pd 
 import numpy as np
 import multiprocessing
 from datasets import Dataset
 from models.model import T5EncoderModel
 from utils.loader import Loader
+from utils.parser import NERParser
 from utils.postprocessor import NERPostprocessor
 from utils.encoder import NEREncoder
+from trainer import Trainer
 
 from arguments import ModelArguments, DataTrainingArguments, TrainingArguments, LoggingArguments
 
@@ -18,9 +19,9 @@ from transformers import (
     T5TokenizerFast,
     HfArgumentParser,
     DataCollatorForTokenClassification,
-    Trainer,
 )
 
+OUTPUT_FILE = "prediction.csv"
 
 def main():
     parser = HfArgumentParser(
@@ -30,12 +31,17 @@ def main():
 
     # -- Loading datasets
     print("\nLoad datasets")
-    loader = Loader(data_args.data_dir, data_args.data_file)
-    raw_dataset = loader.load(test_flag=False)
+    loader = Loader(data_args.data_dir, data_args.eval_data_file)
+    raw_dataset = loader.load(test_flag=True)
 
-    raw_df = pd.DataFrame({"sentences" : raw_dataset})
-    dataset = Dataset.from_pandas(raw_df)
-    print(dataset)
+    # -- Parsing datasets
+    print("\nParse datasets")   
+    parser = NERParser()
+    raw_dataset = parser(raw_dataset)
+    raw_sentences = copy.deepcopy(raw_dataset["sentences"])
+    raw_df = pd.DataFrame({"sentences" : raw_dataset["sentences"]})
+    test_dataset = Dataset.from_pandas(raw_df)
+    print(test_dataset)
 
     # -- CPU counts
     cpu_cores = multiprocessing.cpu_count()
@@ -49,8 +55,8 @@ def main():
     # -- Encoder
     print("\nEncoding Datasets")
     encoder = NEREncoder(tokenizer, data_args.max_input_length)
-    dataset = dataset.map(encoder, batched=True, num_proc=num_proc)
-    dataset = dataset.remove_columns(["sentences"])
+    test_dataset = test_dataset.map(encoder, batched=True, num_proc=num_proc)
+    test_dataset = test_dataset.remove_columns(["sentences"])
 
     # Loading config & Model
     print("\nLoading Model")
@@ -72,13 +78,34 @@ def main():
         tokenizer=tokenizer,
     )
 
-    predictions = trainer.predict(test_dataset=dataset)
+    predictions = trainer.predict(test_dataset=test_dataset)
     
-    # Postprocessing
+    # -- Postprocessing predictions
     tag_dict = {0 : "O", 1 : "QT", 2 : "DT", 3 : "PS" ,4  :  "LC", 5 : "TI", 6 : "OG" }
     postprocessor = NERPostprocessor(tokenizer, data_args.max_input_length, tag_dict)
-    word_list, tag_list = postprocessor(predictions[0], raw_dataset)
-    breakpoint()
+    word_list, tag_list = postprocessor(predictions[0], raw_sentences)
+
+    # -- Saving results
+    test_size = len(raw_sentences)
+    items_list = []
+    for i in range(test_size) :
+        items = []
+
+        for pair in zip(word_list[i], tag_list[i]) :
+            w, t = pair
+            item = "<" + w + ":" + t + ">"
+            items.append(item)
+        
+        if len(items) == 0 :
+            item_str = ""
+        else :
+            item_str = ", ".join(items)
+        items_list.append(item_str)
+
+    results = pd.DataFrame({"Named Entity" : items_list})
+    path = os.path.join(training_args.output_dir, OUTPUT_FILE)
+    results.to_csv(path)
+
 
 if __name__ == "__main__":
     main()

@@ -9,8 +9,8 @@ python train_search.py \
 --eval_data_file klue_ner_test_20.t \
 --group_name Named_Entity_Search \
 --num_train_epochs 3 \
---per_device_train_batch_size 32 \
---per_device_eval_batch_size 32 \
+--per_device_train_batch_size 64 \
+--per_device_eval_batch_size 64 \
 --max_input_length 128 \
 --max_output_length 32 \
 --save_strategy no \
@@ -20,9 +20,21 @@ python train_search.py \
 --save_total_limit 5 \
 --output_dir ./exps \
 --logging_dir ./logs \
---learning_rate 5e-6 \
---weight_decay 1e-3 \
+--learning_rate 5e-5 \
+--weight_decay 1e-2 \
 --generation_num_beams 1 \
 --predict_with_generate True \
 --generation_max_length 32 \
 --warmup_ratio 0.05
+
+## Predict
+python predict_search.py \
+--PLM /home/work/team08/kt-dev/exps/search \
+--data_dir /home/work/team08/data_learn \
+--eval_data_file klue_ner_test_20.t \
+--per_device_eval_batch_size 64 \
+--max_input_length 128 \
+--generation_num_beams 1 \
+--predict_with_generate True \
+--generation_max_length 32 \
+--output_dir ./results

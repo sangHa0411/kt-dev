@@ -3,12 +3,10 @@ import json
 import torch
 import random
 import numpy as np
-import wandb
 import multiprocessing
-from dotenv import load_dotenv
 from datasets import DatasetDict
 from models.model import T5ForConditionalGeneration
-from utils.metrics import Seq2SeqClassifyMetrics, Scorer
+from utils.metrics import Seq2SeqClassifyMetrics
 from utils.loader import Loader
 from utils.parser import Seq2SeqParser
 from utils.seperate import Spliter
@@ -50,7 +48,6 @@ def main():
     tokenizer = T5TokenizerFast.from_pretrained(model_name, use_fast=True)
 
     output_dir = training_args.output_dir
-    load_dotenv(dotenv_path=logging_args.dotenv_path)
 
     # Parsing datasets
     print("\nParse datasets")
@@ -105,19 +102,6 @@ def main():
         compute_metrics=compute_metrics
     )
 
-    # WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
-    # wandb.login(key=WANDB_AUTH_KEY)
-
-    # args = training_args
-    # wandb_name = f"EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}"
-    # wandb.init(
-    #     entity="sangha0411",
-    #     project=logging_args.project_name, 
-    #     name=wandb_name,
-    #     group=logging_args.group_name
-    # )
-    # wandb.config.update(training_args)
-
     # Training
     if training_args.do_train :
         print("\nTraining")
@@ -129,8 +113,7 @@ def main():
         eval_metrics = trainer.evaluate()
         print(eval_metrics)
 
-    # trainer.save_model(target_dir)
-    # wandb.finish()
+    trainer.save_model(target_dir)
 
 
 def seed_everything(seed):

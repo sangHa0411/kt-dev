@@ -4,10 +4,8 @@ import torch
 import copy
 import random
 import numpy as np
-import wandb
 import transformers
 import multiprocessing
-from dotenv import load_dotenv
 from datasets import DatasetDict
 from models.model import T5EncoderModel
 from utils.metrics import NERMetrics, ScoreCalculator
@@ -78,7 +76,6 @@ def main():
     print(datasets)
 
     output_dir = training_args.output_dir
-    load_dotenv(dotenv_path=logging_args.dotenv_path)
 
     # Loading config & Model
     print("\nLoading Model")
@@ -121,19 +118,6 @@ def main():
         compute_metrics=compute_metrics
     )
 
-    WANDB_AUTH_KEY = os.getenv('WANDB_AUTH_KEY')
-    wandb.login(key=WANDB_AUTH_KEY)
-
-    args = training_args
-    wandb_name = f"EP:{args.num_train_epochs}_BS:{args.per_device_train_batch_size}_LR:{args.learning_rate}_WD:{args.weight_decay}_WR:{args.warmup_ratio}"
-    wandb.init(
-        entity="sangha0411",
-        project=logging_args.project_name, 
-        name=wandb_name,
-        group=logging_args.group_name
-    )
-    wandb.config.update(training_args)
-
     # Training
     if training_args.do_train :
         print("\nTraining")
@@ -145,8 +129,7 @@ def main():
         eval_metrics = trainer.evaluate()
         print(eval_metrics)
 
-    # trainer.save_model(checkpoint_dir)
-    wandb.finish()
+    trainer.save_model(checkpoint_dir)
 
 
 def seed_everything(seed):

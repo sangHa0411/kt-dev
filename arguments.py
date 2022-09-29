@@ -40,13 +40,6 @@ class TrainingArguments(Seq2SeqTrainingArguments):
         default="checkpoints",
         metadata={"help": "model output directory"}
     )
-    fold_size: int = field(
-        default=5, metadata={"help": "The number of fold for K-Fold validatin"},
-    )
-    use_noam: bool = field(
-        default=False, metadata={"help" : "flag for using noam scheduelr"}
-    )
-
 
 
 @dataclass

@@ -20,14 +20,16 @@ python train_ner.py \
 --eval_steps 500 \
 --logging_steps 100 \
 --output_dir ./exps \
---learning_rate 5e-5 \
---weight_decay 1e-3
+--learning_rate 3e-5 \
+--weight_decay 1e-2
 
-# ## Predict
-# python predict_ner.py \
-# --PLM ./exps/ner/fold-0 \
-# --data_dir ./data \
-# --data_file klue_ner_test.txt \
-# --per_device_eval_batch_size 8 \
-# --max_input_length 128 \
-# --output_dir ./results
+## Predict
+python predict_ner.py \
+--PLM /home/work/team08/kt-dev/exps/ner \
+--data_dir /home/work/team08/data_learn \
+--eval_data_file klue_ner_test_20.t \
+--per_device_eval_batch_size 16 \
+--max_input_length 128 \
+--output_dir ./results
+
+

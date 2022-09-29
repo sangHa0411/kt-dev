@@ -13,3 +13,4 @@ __pycache__
 *.ipynb
 *.zip
 .DS_Store
+results

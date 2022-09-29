@@ -20,8 +20,8 @@ python train_classify.py \
 --save_total_limit 5 \
 --output_dir ./exps \
 --logging_dir ./logs \
---learning_rate 5e-5 \
---weight_decay 1e-3 \
+--learning_rate 3e-5 \
+--weight_decay 1e-2 \
 --generation_num_beams 1 \
 --predict_with_generate True \
 --generation_max_length 32 \

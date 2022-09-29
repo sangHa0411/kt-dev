@@ -34,11 +34,27 @@ class Seq2SeqClassifyPreprocessor :
 
 
 class Seq2SeqSearchPreprocessor :
-    def __init__(self, tag_dict, test_flag) :
+    def __init__(self, tag_dict) :
         self.tag_dict = tag_dict
-        self.test_flag = test_flag
 
-    def __call__(self, dataset) :
+    def preprocess4test(self, dataset) :
+        inputs = []
+        size = len(dataset)
+        for i in tqdm(range(size)) :
+            sentence = dataset[i]["sentences"]
+
+            for tag in self.tag_dict :
+                tag_name = self.tag_dict[tag]
+                prefix = "개체 유형 : " + tag_name
+
+                input_sen = prefix + ", " + sentence
+                inputs.append(input_sen)
+
+        df = pd.DataFrame({"inputs" : inputs})
+        dset = Dataset.from_pandas(df)
+        return dset
+
+    def preprocess4train(self, dataset, eval_flag) :
 
         inputs = []
         labels = []
@@ -64,7 +80,7 @@ class Seq2SeqSearchPreprocessor :
                 input_sen = prefix + ", " + sentence
                 if len(word_list) == 0 :
 
-                    if self.test_flag :
+                    if eval_flag :
                         output_sen = "없음"
                     else :
                         flag = np.random.randint(2)
